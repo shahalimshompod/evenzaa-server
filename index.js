@@ -529,7 +529,6 @@ async function run() {
     app.get("/details-event/:id", verifyUserToken, async (req, res) => {
       try {
         const id = req.params.id;
-        console.log(id);
         const query = { _id: new ObjectId(id) };
         const result = await events.findOne(query);
         res.send(result);
@@ -564,7 +563,7 @@ async function run() {
 
         res.send(result);
       } catch (error) {
-        console.log(error);
+        console.error(error);
       }
     });
 
