@@ -94,8 +94,8 @@ async function run() {
     };
 
     // operations
-    // post operations here
 
+    // post operations here
     // post operation for storing user credentials like email, password
     app.post("/user_credential", async (req, res) => {
       try {
@@ -263,6 +263,33 @@ async function run() {
         } else {
           res.send({ message: "User Logged out successfully", token: null });
         }
+      } catch (error) {
+        console.error(error);
+      }
+    });
+
+    // get operations here
+    // get operation for featured events
+    app.get("/featured-events", async (req, res) => {
+      try {
+        const query = { featured: "true" };
+        const result = await events
+          .find(query)
+          .sort({ createdAt: -1 })
+          .limit(3)
+          .toArray();
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+      }
+    });
+
+    // get operation for all events
+    app.get("/all-events", verifyUserToken, async (req, res) => {
+      try {
+        const cursor = events.find().sort({ createdAt: -1 });
+        const result = await cursor.toArray();
+        res.send(result);
       } catch (error) {
         console.error(error);
       }
