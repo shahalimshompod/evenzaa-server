@@ -21,7 +21,7 @@ app.use(cors());
 app.use(express.json());
 
 // configuring DATABASE
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ezm1s.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -269,7 +269,7 @@ async function run() {
     });
 
     // post operation for add event
-    app.post("/add-event", async (req, res) => {
+    app.post("/add-event", verifyUserToken, async (req, res) => {
       try {
         // getting desired data from client body
         const data = req.body;
@@ -296,6 +296,7 @@ async function run() {
           featured: data.featured,
           image: data.image,
           createdAt: new Date(),
+          alreadyJoined: [],
         };
 
         // check if final data getting correctly
@@ -309,6 +310,48 @@ async function run() {
         // if all goes well then add the event to the database
         const result = await events.insertOne(finalData);
         res.send(result);
+      } catch (error) {
+        console.error(error);
+      }
+    });
+
+    // post operation for join event
+    app.post("/join-event/:id", async (req, res) => {
+      try {
+        const eventId = req.params.id;
+        const { id } = req.body;
+
+        // getting specific event by event id
+        const event = await events.findOne({
+          _id: new ObjectId(eventId),
+        });
+
+        // checking if event is there
+        if (!event) {
+          return res.send({ message: "Something went wrong!", success: false });
+        }
+
+        // check if event have the same user id
+        if (event.alreadyJoined.includes(id)) {
+          return res.json({
+            alreadyJoined: true,
+            message: "You are already joined to this event!",
+          });
+        }
+
+        // if everything goes well then go ahead and increment
+        await events.updateOne(
+          { _id: new ObjectId(eventId) },
+          {
+            $push: { alreadyJoined: id },
+            $inc: { attendeeCount: 1 },
+          }
+        );
+
+        res.json({
+          message: "Successfully Joined to this event!",
+          success: true,
+        });
       } catch (error) {
         console.error(error);
       }
@@ -358,6 +401,33 @@ async function run() {
         const query = { category: category };
         const cursor = events.find(query).sort({ createdAt: -1 });
         const result = await cursor.toArray();
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+      }
+    });
+
+    // get operation for my bookings
+    app.get("/my-event-data", async (req, res) => {
+      try {
+        // getting email from user
+        const email = req.query.email;
+        const query = { organizerEmail: email };
+        const cursor = events.find(query).sort({ createdAt: -1 });
+        const result = await cursor.toArray();
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+      }
+    });
+
+    // get operation for details page
+    app.get("/details-event/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        console.log(id);
+        const query = { _id: new ObjectId(id) };
+        const result = await events.findOne(query);
         res.send(result);
       } catch (error) {
         console.error(error);
