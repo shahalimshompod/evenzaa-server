@@ -407,8 +407,8 @@ async function run() {
       }
     });
 
-    // get operation for my bookings
-    app.get("/my-event-data", async (req, res) => {
+    // get operation for my event data
+    app.get("/my-event-data", verifyUserToken, async (req, res) => {
       try {
         // getting email from user
         const email = req.query.email;
@@ -428,6 +428,19 @@ async function run() {
         console.log(id);
         const query = { _id: new ObjectId(id) };
         const result = await events.findOne(query);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+      }
+    });
+
+    // delete operation
+    // delete event
+    app.delete("/delete-event/:id", verifyUserToken, async (req, res) => {
+      try {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await events.deleteOne(query);
         res.send(result);
       } catch (error) {
         console.error(error);
