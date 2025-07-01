@@ -373,14 +373,118 @@ async function run() {
       }
     });
 
+    // get operation for search result
+    app.get("/get-search-result-data", async (req, res) => {
+      try {
+        const search = req.query.query || "";
+        const filter = search
+          ? {
+              $or: [
+                { title: { $regex: search, $options: "i" } },
+                { category: { $regex: search, $options: "i" } },
+              ],
+            }
+          : {};
+
+        const result = await events.find(filter).toArray();
+        res.json(result);
+      } catch (error) {
+        console.error(error);
+      }
+    });
+
     // get operation for all events
     app.get("/all-events", verifyUserToken, async (req, res) => {
       try {
-        const cursor = events.find().sort({ createdAt: -1 });
-        const result = await cursor.toArray();
+        const { date, range } = req.query;
+        let filter = {};
+
+        // If specific date filter is provided
+        if (date) {
+          // Directly compare string dates (database stores "YYYY-MM-DD")
+          filter.eventDate = date;
+        }
+        // If date range filter is provided
+        else if (range) {
+          const today = new Date();
+          today.setUTCHours(0, 0, 0, 0);
+
+          // Format dates to match database format
+          const formatDate = (dateObj) => {
+            return dateObj.toISOString().split("T")[0];
+          };
+
+          switch (range) {
+            case "currentWeek": {
+              const start = new Date(today);
+              start.setDate(today.getDate() - today.getDay());
+
+              const end = new Date(start);
+              end.setDate(start.getDate() + 7);
+
+              filter.eventDate = {
+                $gte: formatDate(start),
+                $lt: formatDate(end),
+              };
+              break;
+            }
+            case "lastWeek": {
+              const start = new Date(today);
+              start.setDate(today.getDate() - today.getDay() - 7);
+
+              const end = new Date(start);
+              end.setDate(start.getDate() + 7);
+
+              filter.eventDate = {
+                $gte: formatDate(start),
+                $lt: formatDate(end),
+              };
+              break;
+            }
+            case "currentMonth": {
+              const start = new Date(today.getFullYear(), today.getMonth(), 1);
+              const end = new Date(
+                today.getFullYear(),
+                today.getMonth() + 1,
+                1
+              );
+
+              filter.eventDate = {
+                $gte: formatDate(start),
+                $lt: formatDate(end),
+              };
+              break;
+            }
+            case "lastMonth": {
+              const start = new Date(
+                today.getFullYear(),
+                today.getMonth() - 1,
+                1
+              );
+              const end = new Date(today.getFullYear(), today.getMonth(), 1);
+
+              filter.eventDate = {
+                $gte: formatDate(start),
+                $lt: formatDate(end),
+              };
+              break;
+            }
+            default: {
+              // Return all events if invalid range
+              break;
+            }
+          }
+        }
+
+        const result = await events
+          .find(filter)
+          .sort({ createdAt: -1 })
+          .toArray();
+
         res.send(result);
       } catch (error) {
-        console.error(error);
+        console.error("Error fetching filtered events:", error);
+        res.status(500).send({ message: "Server Error" });
       }
     });
 
@@ -422,7 +526,7 @@ async function run() {
     });
 
     // get operation for details page
-    app.get("/details-event/:id", async (req, res) => {
+    app.get("/details-event/:id", verifyUserToken, async (req, res) => {
       try {
         const id = req.params.id;
         console.log(id);
@@ -435,7 +539,7 @@ async function run() {
     });
 
     // put operation
-    app.put("/update-event/:id", async (req, res) => {
+    app.put("/update-event/:id", verifyUserToken, async (req, res) => {
       try {
         // getting id and formdata from client
         const { id } = req.params;
