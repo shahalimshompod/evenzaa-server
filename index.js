@@ -304,6 +304,19 @@ async function run() {
         console.error(error);
       }
     });
+
+    // get operation for category wise events
+    app.get("/events-by-category", verifyUserToken, async (req, res) => {
+      try {
+        const category = req.query.category;
+        const query = { category: category };
+        const cursor = events.find(query).sort({ createdAt: -1 });
+        const result = await cursor.toArray();
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+      }
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
