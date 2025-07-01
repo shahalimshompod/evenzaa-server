@@ -268,6 +268,52 @@ async function run() {
       }
     });
 
+    // post operation for add event
+    app.post("/add-event", async (req, res) => {
+      try {
+        // getting desired data from client body
+        const data = req.body;
+
+        // check if data is getting correctly
+        if (!data) {
+          return res.send({
+            message: "Something went wrong while adding events",
+            insertedId: null,
+          });
+        }
+
+        // final data
+        const finalData = {
+          title: data.title,
+          organizer: data.organizer,
+          organizerEmail: data.organizerEmail,
+          eventDate: data.eventDate,
+          time: data.time,
+          location: data.location,
+          description: data.description,
+          attendeeCount: 0,
+          category: data.category,
+          featured: data.featured,
+          image: data.image,
+          createdAt: new Date(),
+        };
+
+        // check if final data getting correctly
+        if (!finalData) {
+          return res.send({
+            message: "Something went wrong while adding events",
+            insertedId: null,
+          });
+        }
+
+        // if all goes well then add the event to the database
+        const result = await events.insertOne(finalData);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+      }
+    });
+
     // get operations here
     // get operation for featured events
     app.get("/featured-events", async (req, res) => {
