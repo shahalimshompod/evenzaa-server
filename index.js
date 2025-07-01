@@ -78,7 +78,7 @@ async function run() {
 
         // if the token is valid then allow access
         req.user = {
-          id: userData._id,
+          _id: userData._id,
           email: userData.email,
           name: userData.name,
           image: userData.image,
@@ -290,6 +290,16 @@ async function run() {
         const cursor = events.find().sort({ createdAt: -1 });
         const result = await cursor.toArray();
         res.send(result);
+      } catch (error) {
+        console.error(error);
+      }
+    });
+
+    // get operation for user
+    app.get("/user", verifyUserToken, async (req, res) => {
+      try {
+        const user = req.user;
+        res.send(user);
       } catch (error) {
         console.error(error);
       }
