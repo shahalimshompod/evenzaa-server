@@ -434,6 +434,36 @@ async function run() {
       }
     });
 
+    // put operation
+    app.put("/update-event/:id", async (req, res) => {
+      try {
+        // getting id and formdata from client
+        const { id } = req.params;
+        const updatedData = req.body;
+
+        if (updatedData._id) {
+          delete updatedData._id;
+        }
+
+        if (!id || !updatedData) {
+          return res.send({
+            message: "Something went wrong while updating data",
+            modifiedCount: 0,
+          });
+        }
+
+        // updating data in database
+        const result = await events.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: updatedData }
+        );
+
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
     // delete operation
     // delete event
     app.delete("/delete-event/:id", verifyUserToken, async (req, res) => {
