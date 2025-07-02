@@ -67,8 +67,17 @@ async function run() {
         // get the token from bearer
         const token = authHeader.split(" ")[1];
 
+        if (!token) {
+          return res.status(403).json({ message: "Forbidden: Invalid token" });
+        }
+
         // match the token from database
         const user = await user_credentials.findOne({ userToken: token });
+
+        if (!user) {
+          return res.status(403).json({ message: "Forbidden: Invalid token" });
+        }
+
         const userData = await user_data.findOne({ email: user.email });
 
         // if the token is not matched then return forbidden
@@ -491,6 +500,9 @@ async function run() {
     // get operation for user
     app.get("/user", verifyUserToken, async (req, res) => {
       try {
+        if (!req.user) {
+          return res.status(404).json({ message: "User not found" });
+        }
         const user = req.user;
         res.send(user);
       } catch (error) {
