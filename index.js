@@ -55,7 +55,7 @@ async function run() {
     // middlewares here "verifyToken"
     const verifyUserToken = async (req, res, next) => {
       try {
-        const authHeader = req.headers.authorization;
+        const authHeader = req?.headers?.authorization;
 
         // check if there is any token or not
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -65,7 +65,7 @@ async function run() {
         }
 
         // get the token from bearer
-        const token = authHeader.split(" ")[1];
+        const token = authHeader?.split(" ")[1];
 
         // match the token from database
         const user = await user_credentials.findOne({ userToken: token });
