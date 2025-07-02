@@ -17,7 +17,14 @@ const crypto = require("crypto");
 const port = process.env.PORT || 3000;
 
 // getting middlewares by using the app created by express
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 app.use(express.json());
 
 // configuring DATABASE
@@ -57,35 +64,41 @@ async function run() {
       try {
         const authHeader = req.headers.authorization;
 
-        // check if there is any token or not
+        console.log("auth header --> ", authHeader);
+
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
-          return res
-            .status(401)
-            .send({ message: "Unauthorized: No token provided" });
+          return res.status(401).json({
+            success: false,
+            message: "Unauthorized: No token provided",
+          });
         }
 
-        // get the token from bearer
         const token = authHeader.split(" ")[1];
+        console.log("Received token:", token);
 
         if (!token) {
-          return res.status(403).json({ message: "Forbidden: Invalid token" });
+          return res.status(403).json({
+            success: false,
+            message: "Forbidden: Invalid token format",
+          });
         }
 
-        // match the token from database
         const user = await user_credentials.findOne({ userToken: token });
-
         if (!user) {
-          return res.status(403).json({ message: "Forbidden: Invalid token" });
+          return res.status(403).json({
+            success: false,
+            message: "Forbidden: Invalid or expired token",
+          });
         }
 
         const userData = await user_data.findOne({ email: user.email });
-
-        // if the token is not matched then return forbidden
-        if (!user) {
-          return res.status(403).send({ message: "Forbidden: Invalid token" });
+        if (!userData) {
+          return res.status(404).json({
+            success: false,
+            message: "User data not found",
+          });
         }
 
-        // if the token is valid then allow access
         req.user = {
           _id: userData._id,
           email: userData.email,
@@ -94,11 +107,14 @@ async function run() {
           createdAt: userData.createdAt,
         };
 
-        // allow access to next middleware or route
         next();
       } catch (error) {
         console.error("Token verification failed:", error);
-        return res.status(500).send({ message: "Internal Server Error" });
+        return res.status(500).json({
+          success: false,
+          message: "Internal Server Error",
+          error: error.message,
+        });
       }
     };
 
@@ -514,6 +530,7 @@ async function run() {
     app.get("/events-by-category", verifyUserToken, async (req, res) => {
       try {
         const category = req.query.category;
+        console.log(category);
         const query = { category: category };
         const cursor = events.find(query).sort({ createdAt: -1 });
         const result = await cursor.toArray();
