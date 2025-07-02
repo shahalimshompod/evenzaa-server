@@ -520,7 +520,7 @@ async function run() {
     });
 
     // get operation for category wise events
-    app.get("/events-by-category", async (req, res) => {
+    app.get("/events-by-category", verifyUserToken, async (req, res) => {
       try {
         const category = req.query.category;
         console.log(category);
