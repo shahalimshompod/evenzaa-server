@@ -20,7 +20,6 @@ const port = process.env.PORT || 3000;
 app.use(
   cors({
     origin: "https://evenzaa-client.vercel.app/",
-    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
