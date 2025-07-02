@@ -374,7 +374,7 @@ async function run() {
     });
 
     // get operation for search result
-    app.get("/get-search-result-data", async (req, res) => {
+    app.get("/get-search-result-data", verifyUserToken, async (req, res) => {
       try {
         const search = req.query.query || "";
         const filter = search
