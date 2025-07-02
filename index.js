@@ -19,7 +19,7 @@ const port = process.env.PORT || 3000;
 // getting middlewares by using the app created by express
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "https://evenzaa-client.vercel.app/",
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
