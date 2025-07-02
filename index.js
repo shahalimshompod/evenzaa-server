@@ -17,13 +17,7 @@ const crypto = require("crypto");
 const port = process.env.PORT || 3000;
 
 // getting middlewares by using the app created by express
-app.use(
-  cors({
-    origin: "https://evenzaa-client.vercel.app/",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+app.use(cors());
 app.use(express.json());
 
 // configuring DATABASE
@@ -526,7 +520,7 @@ async function run() {
     });
 
     // get operation for category wise events
-    app.get("/events-by-category", verifyUserToken, async (req, res) => {
+    app.get("/events-by-category", async (req, res) => {
       try {
         const category = req.query.category;
         console.log(category);
